@@ -41,8 +41,9 @@ header.top{
   display:flex; align-items:center; gap:14px; flex-wrap:wrap;
 }
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
-.brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--proc),var(--sale));
-  display:grid;place-items:center;color:#fff;font-size:15px;font-weight:800}
+.brand .logo{height:40px;display:flex;align-items:center;flex:none}
+.brand .logo img{height:100%;width:auto;object-fit:contain;display:block}
+:root[data-theme="dark"] .brand .logo{background:#fff;border-radius:9px;padding:3px 7px;height:42px}
 .brand small{display:block;font-weight:500;font-size:11px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
 .spacer{flex:1}
 .btn{
@@ -170,14 +171,53 @@ tfoot td{padding:9px 11px;font-weight:700;background:var(--surface-2);border-top
 .pfi:focus{outline:2px solid var(--warn);outline-offset:-1px;background:var(--surface-2)}
 #pfTbl td{white-space:nowrap}
 .sec-title{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700;margin:22px 0 10px}
+
+/* ---------- print / PDF report ---------- */
+.printhead{display:none}
+@media print{
+  :root,:root[data-theme="dark"]{
+    color-scheme:light;
+    --plane:#fff; --surface:#fff; --surface-2:#fff;
+    --ink:#0b0b0b; --ink-2:#3a3a38; --muted:#6b6a66;
+    --grid:#dedcd4; --axis:#b9b8ae; --border:rgba(11,11,11,.22); --shadow:none;
+  }
+  @page{margin:12mm}
+  html,body{background:#fff !important}
+  header.top,nav.tabs,.drop,.filters,.btn,.toast,#cloudChip{display:none !important}
+  main{padding:0;max-width:none}
+  .printhead{
+    display:flex; align-items:center; gap:14px;
+    border-bottom:2px solid #0b0b0b; padding-bottom:10px; margin-bottom:16px;
+  }
+  .printhead img{height:56px;width:auto;display:block}
+  .printhead .t{font-size:16px;font-weight:800;letter-spacing:.2px;line-height:1.2}
+  .printhead .s{font-size:11.5px;color:#52514e;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .printhead .d{margin-left:auto;font-size:11.5px;color:#52514e;text-align:right;font-weight:600}
+  .card:has(.drop){display:none}
+  .card,.kpi{break-inside:avoid;box-shadow:none}
+  .tw{max-height:none !important;overflow:visible !important}
+  thead th,tfoot td{position:static}
+  table{font-size:11px}
+  a{color:inherit;text-decoration:none}
+}
 </style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
 
+<div class="printhead" id="printHead">
+  <img src="data:image/jpeg;base64,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" alt="Oakcraft">
+  <div>
+    <div class="t">Oakcraft &middot; Flipkart Seller Analytics</div>
+    <div class="s">Sales &middot; Returns &middot; Cancelled &middot; Profit</div>
+  </div>
+  <div class="d">Report generated<br><span id="printDate"></span></div>
+</div>
+<script>try{document.getElementById('printDate').textContent=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}catch(e){}</script>
+
 <header class="top">
   <div class="brand">
-    <div class="logo">O</div>
+    <div class="logo"><img src="data:image/jpeg;base64,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" alt="Oakcraft logo"></div>
     <div>Flipkart Seller Analytics<small>Oakcraft · Sales · Returns · Cancelled · Profit</small></div>
   </div>
   <div class="spacer"></div>
