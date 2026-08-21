@@ -1261,6 +1261,49 @@ async function cloudPush(){
   }catch(e){ cloudStatus('❌ '+esc(e.message)); toast('Push failed: '+e.message); }
   finally{ cloudBusy(false); }
 }
+/* Fast first-load pull: ask the sheet for its row counts once, then fetch every
+   block at the same time instead of one after another, and paint the dashboard
+   as soon as the orders are in (prices / cashback fill in a moment later). */
+async function fastPull(onProgress){
+  const say = onProgress || function(){};
+  say('Checking the sheet\u2026');
+  const info = await api('ping');
+  const L = 1000, S_L = 2000;
+  let done = 0;
+  const nOrders = Math.ceil((info.orders||0)/L);
+  const tick = () => { done++; say('Downloading\u2026 ' + done + ' / ' + nOrders + ' blocks'); };
+
+  const orderJobs = [];
+  for(let off=0; off<(info.orders||0); off+=L) orderJobs.push(api('pull',{offset:off,limit:L}).then(j=>{tick(); return j;}));
+
+  const extraJobs = [];
+  if(info.skus)     extraJobs.push(api('pullSku').then(j=>['sku',j]));
+  if(info.cashback) extraJobs.push(api('pullCash').then(j=>['cash',j]));
+  if(info.settlements) for(let off=0; off<info.settlements; off+=S_L) extraJobs.push(api('pullSettle',{offset:off,limit:S_L}).then(j=>['settle',j]));
+
+  const oRes = await Promise.all(orderJobs);
+  const idx = new Map(S.rows.map((r,i)=>[r._k,i]));
+  oRes.forEach(j=>(j.rows||[]).forEach(a=>{ const r=arrToRow(a);
+    if(idx.has(r._k)) S.rows[idx.get(r._k)]=r; else { idx.set(r._k,S.rows.length); S.rows.push(r); } }));
+  reclassify(); renderAll();
+  say('Finishing up\u2026');
+
+  const eRes = await Promise.all(extraJobs);
+  const si = new Map(S.settle.map((r,i)=>[r._k,i]));
+  const ci = new Map(S.cash.map((r,i)=>[r._k,i]));
+  eRes.forEach(pair=>{ const kind=pair[0], j=pair[1], rows=j.rows||[];
+    if(kind==='sku') rows.forEach(a=>{ const k=String(a[0]||'').trim(); if(!k) return;
+      S.sku[k]={basic:+a[2]||0, sell:+a[3]||0, setl:+a[4]||0, rcost:+a[5]||0, note:a[6]||''}; });
+    else if(kind==='cash') rows.forEach(a=>{ const r=arrToCash(a);
+      if(ci.has(r._k)) S.cash[ci.get(r._k)]=r; else { ci.set(r._k,S.cash.length); S.cash.push(r); } });
+    else rows.forEach(a=>{ const r=arrToSettle(a);
+      if(si.has(r._k)) S.settle[si.get(r._k)]=r; else { si.set(r._k,S.settle.length); S.settle.push(r); } });
+  });
+  reclassify(); save(); renderAll();
+  CLOUD.last=new Date().toLocaleString('en-IN'); cloudSave(); cloudStatus('\u2705 Loaded from the sheet');
+  return S.rows.length;
+}
+
 async function cloudPull(){
   if(S.rows.length && !confirm('Sheet data will be merged with your local data (rows with the same RowKey are overwritten). Continue?')) return;
   try{
@@ -2272,7 +2315,7 @@ load(); wireCloud(); wireProfit(); go('over');
     'border-radius:11px;padding:11px 18px;font-size:13px;font-weight:600;max-width:90vw;text-align:center';
   b.textContent='\u2601 Loading data from the Google Sheet\u2026';
   document.body.appendChild(b);
-  try{ await cloudPull(); }catch(e){}
+  try{ await fastPull(msg=>{ b.textContent='☁ '+msg; }); }catch(e){}
   if(S.rows.length){ b.remove(); }
   else{
     b.textContent='\u26a0 Could not load data from the sheet \u2014 ask the dashboard owner to check the connection.';
