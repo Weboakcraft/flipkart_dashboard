@@ -2262,6 +2262,24 @@ let rt; addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(renderAll,
 try{ const t=localStorage.getItem('fk_theme'); if(t){document.documentElement.dataset.theme=t; $('#btnTheme').textContent=t==='dark'?'☀ Light':'🌙 Dark';} }catch(e){}
 load(); wireCloud(); wireProfit(); go('over');
 
+/* A visitor opening the shared link has no local data — pull it from the
+   Google Sheet automatically so the dashboard is never empty for them. */
+(async function autoPullOnStart(){
+  if(S.rows.length || !CLOUD.url) return;
+  const b=document.createElement('div');
+  b.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99;'+
+    'background:var(--ink);color:var(--surface);box-shadow:0 8px 30px rgba(0,0,0,.3);'+
+    'border-radius:11px;padding:11px 18px;font-size:13px;font-weight:600;max-width:90vw;text-align:center';
+  b.textContent='\u2601 Loading data from the Google Sheet\u2026';
+  document.body.appendChild(b);
+  try{ await cloudPull(); }catch(e){}
+  if(S.rows.length){ b.remove(); }
+  else{
+    b.textContent='\u26a0 Could not load data from the sheet \u2014 ask the dashboard owner to check the connection.';
+    setTimeout(()=>b.remove(), 9000);
+  }
+})();
+
 </script>
 </body>
 </html>
