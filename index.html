@@ -1264,10 +1264,9 @@ async function cloudPush(){
 /* Fast first-load pull: ask the sheet for its row counts once, then fetch every
    block at the same time instead of one after another, and paint the dashboard
    as soon as the orders are in (prices / cashback fill in a moment later). */
-async function fastPull(onProgress){
+async function fastPull(onProgress, info){
   const say = onProgress || function(){};
-  say('Checking the sheet\u2026');
-  const info = await api('ping');
+  if(!info){ say('Checking the sheet\u2026'); info = await api('ping'); }
   const L = 1000, S_L = 2000;
   let done = 0;
   const nOrders = Math.ceil((info.orders||0)/L);
@@ -2305,21 +2304,48 @@ let rt; addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(renderAll,
 try{ const t=localStorage.getItem('fk_theme'); if(t){document.documentElement.dataset.theme=t; $('#btnTheme').textContent=t==='dark'?'☀ Light':'🌙 Dark';} }catch(e){}
 load(); wireCloud(); wireProfit(); go('over');
 
-/* A visitor opening the shared link has no local data — pull it from the
-   Google Sheet automatically so the dashboard is never empty for them. */
-(async function autoPullOnStart(){
-  if(S.rows.length || !CLOUD.url) return;
-  const b=document.createElement('div');
-  b.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99;'+
+/* The Google Sheet is the single source of truth. On every open the dashboard
+   paints its cached copy straight away, then checks the sheet in the background:
+   if the sheet changed, the copy is rebuilt from it; if the sheet was emptied,
+   the dashboard clears itself too. */
+(async function syncWithSheet(){
+  if(!CLOUD.url) return;
+  const fresh = !S.rows.length;
+  const note = document.createElement('div');
+  note.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99;'+
     'background:var(--ink);color:var(--surface);box-shadow:0 8px 30px rgba(0,0,0,.3);'+
     'border-radius:11px;padding:11px 18px;font-size:13px;font-weight:600;max-width:90vw;text-align:center';
-  b.textContent='\u2601 Loading data from the Google Sheet\u2026';
-  document.body.appendChild(b);
-  try{ await fastPull(msg=>{ b.textContent='☁ '+msg; }); }catch(e){}
-  if(S.rows.length){ b.remove(); }
-  else{
-    b.textContent='\u26a0 Could not load data from the sheet \u2014 ask the dashboard owner to check the connection.';
-    setTimeout(()=>b.remove(), 9000);
+  const say = t => { note.textContent=t; if(!note.isConnected) document.body.appendChild(note); };
+  const hide = ms => setTimeout(()=>note.remove(), ms||0);
+
+  if(fresh) say('\u2601 Loading data from the Google Sheet\u2026');
+  let info;
+  try{ info = await api('ping'); }
+  catch(e){
+    if(fresh){ say('\u26a0 Could not reach the Google Sheet \u2014 please try again in a moment.'); hide(9000); }
+    else note.remove();
+    return;
+  }
+
+  const sOrders = info.orders||0, sCash = info.cashback||0;
+
+  if(!sOrders && !sCash){                       // sheet emptied -> clear the dashboard
+    if(S.rows.length || S.cash.length){
+      S.rows=[]; S.cash=[]; S.settle=[]; S.sku={}; S.files=[]; S.map={}; S.headers=[]; S.unknown={};
+      save(); renderAll();
+      say('\ud83d\uddd1 The Google Sheet is empty \u2014 the dashboard was cleared to match it.'); hide(9000);
+    } else note.remove();
+    return;
+  }
+
+  if(S.rows.length===sOrders && S.cash.length===sCash){ note.remove(); return; }
+
+  S.rows=[]; S.cash=[]; S.settle=[]; S.sku={};   // rebuild from the sheet
+  try{
+    await fastPull(m=>say('\u2601 '+m), info);
+    say('\u2705 Updated from the Google Sheet'); hide(3500);
+  }catch(e){
+    say('\u26a0 Could not load data from the sheet.'); hide(9000);
   }
 })();
 
