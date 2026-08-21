@@ -41,9 +41,10 @@ header.top{
   display:flex; align-items:center; gap:14px; flex-wrap:wrap;
 }
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
-.brand .logo{height:40px;display:flex;align-items:center;flex:none}
-.brand .logo img{height:100%;width:auto;object-fit:contain;display:block}
-:root[data-theme="dark"] .brand .logo{background:#fff;border-radius:9px;padding:3px 7px;height:42px}
+/* Replace the contents of .brand .logo with <img src="data:image/jpeg;base64,..."> to use a real logo */
+.brand .logo{width:30px;height:30px;border-radius:9px;overflow:hidden;background:linear-gradient(135deg,var(--proc),var(--sale));
+  display:grid;place-items:center;color:#fff;font-size:15px;font-weight:800}
+.brand .logo img{width:100%;height:100%;object-fit:cover;display:block}
 .brand small{display:block;font-weight:500;font-size:11px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
 .spacer{flex:1}
 .btn{
@@ -170,61 +171,53 @@ tfoot td{padding:9px 11px;font-weight:700;background:var(--surface-2);border-top
   padding:5px 7px;font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums}
 .pfi:focus{outline:2px solid var(--warn);outline-offset:-1px;background:var(--surface-2)}
 #pfTbl td{white-space:nowrap}
-.sec-title{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700;margin:22px 0 10px}
 
-/* ---------- print / PDF report ---------- */
+/* ---------- print / PDF ---------- */
 .printhead{display:none}
 @media print{
-  :root,:root[data-theme="dark"]{
-    color-scheme:light;
-    --plane:#fff; --surface:#fff; --surface-2:#fff;
-    --ink:#0b0b0b; --ink-2:#3a3a38; --muted:#6b6a66;
-    --grid:#dedcd4; --axis:#b9b8ae; --border:rgba(11,11,11,.22); --shadow:none;
+  :root, :root[data-theme="dark"]{
+    color-scheme: light;
+    --plane:#ffffff; --surface:#ffffff; --surface-2:#ffffff;
+    --ink:#000000; --ink-2:#333333; --muted:#666666;
+    --grid:#dddddd; --axis:#999999; --border:#cccccc;
+    --shadow:none;
   }
+  html,body{background:#fff!important;color:#000!important}
+  header.top, nav.tabs, .drop, .filters, .btn, #toast, #cloudChip, label.btn{display:none!important}
+  .printhead{display:flex!important;align-items:center;gap:12px;padding:0 0 12px;margin:0 0 16px;
+    border-bottom:2px solid #000}
+  .printhead .logo{width:38px;height:38px;border-radius:9px;object-fit:cover}
+  .printhead h1{margin:0;font-size:17px;letter-spacing:.3px}
+  .printhead small{display:block;font-weight:500;font-size:11px;color:#555}
+  .printhead .when{margin-left:auto;font-size:12px;color:#333}
+  .card{break-inside:avoid;box-shadow:none!important;border:1px solid #ccc!important}
+  .tw{max-height:none!important;overflow:visible!important}
+  table{page-break-inside:auto} tr{page-break-inside:avoid}
+  a{color:#000;text-decoration:none}
   @page{margin:12mm}
-  html,body{background:#fff !important}
-  header.top,nav.tabs,.drop,.filters,.btn,.toast,#cloudChip{display:none !important}
-  main{padding:0;max-width:none}
-  .printhead{
-    display:flex; align-items:center; gap:14px;
-    border-bottom:2px solid #0b0b0b; padding-bottom:10px; margin-bottom:16px;
-  }
-  .printhead img{height:56px;width:auto;display:block}
-  .printhead .t{font-size:16px;font-weight:800;letter-spacing:.2px;line-height:1.2}
-  .printhead .s{font-size:11.5px;color:#52514e;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-  .printhead .d{margin-left:auto;font-size:11.5px;color:#52514e;text-align:right;font-weight:600}
-  .card:has(.drop){display:none}
-  .card,.kpi{break-inside:avoid;box-shadow:none}
-  .tw{max-height:none !important;overflow:visible !important}
-  thead th,tfoot td{position:static}
-  table{font-size:11px}
-  a{color:inherit;text-decoration:none}
 }
+.sec-title{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700;margin:22px 0 10px}
 </style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
 
 <div class="printhead" id="printHead">
-  <img src="data:image/jpeg;base64,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" alt="Oakcraft">
-  <div>
-    <div class="t">Oakcraft &middot; Flipkart Seller Analytics</div>
-    <div class="s">Sales &middot; Returns &middot; Cancelled &middot; Profit</div>
-  </div>
-  <div class="d">Report generated<br><span id="printDate"></span></div>
+  <img class="logo" id="printLogo" src="" alt="" hidden>
+  <div><h1>Flipkart Seller Analytics</h1><small>Oakcraft · Sales · Returns · Cancelled · Profit</small></div>
+  <div class="when">Printed <span id="printDate"></span></div>
 </div>
-<script>try{document.getElementById('printDate').textContent=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}catch(e){}</script>
 
 <header class="top">
   <div class="brand">
-    <div class="logo"><img src="data:image/jpeg;base64,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" alt="Oakcraft logo"></div>
+    <div class="logo">O</div>
     <div>Flipkart Seller Analytics<small>Oakcraft · Sales · Returns · Cancelled · Profit</small></div>
   </div>
   <div class="spacer"></div>
   <span id="cloudChip" class="pill c hide" style="font-size:11.5px;padding:5px 10px">☁</span>
   <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-2)">Date basis
     <select id="selBasis" style="border:1px solid var(--border);background:var(--surface);border-radius:9px;padding:6px 9px;font-size:12.5px">
-      <option value="auto">Auto (smart)</option><option value="order">Order date</option><option value="event">Invoice / event date</option>
+      <option value="auto">Auto (smart)</option><option value="order">Order date (Buyer Invoice Date)</option><option value="event">Invoice / event date</option>
     </select></label>
   <button class="btn" id="btnTheme">🌙 Dark</button>
   <button class="btn" id="btnBackup">⬇ Backup</button>
@@ -555,6 +548,7 @@ function parseDate(v){
 const norm = h => String(h||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const FP = {
   date   : [/^order date$/,/^ordered on$/,/order date/,/ordered on/,/^date$/,/created on/],
+  bdate  : [/buyer invoice date/,/^buyer invoice dt$/],   // GST Sales Report: this IS the order date
   edate  : [/buyer invoice date/,/^invoice date$/,/^invoice date mm dd yy$/,/^invoice date/,/return approval date/,/credit note date/,/event date/,/dispatch date/],
   sku    : [/^sku$/,/seller sku/,/^sku id$/,/sku code/,/\bsku\b/],
   fsn    : [/^fsn$/,/\bfsn\b/],
@@ -591,15 +585,16 @@ const FP = {
   setlDate:[/^payment date$/,/settlement date/,/neft date/,/payment on/],
   setlRef: [/neft id/,/^utr$/,/utr number/,/payment reference/,/neft reference/]
 };
+const REUSE_COL = new Set(['amount2','status2','bdate']);   // may share a column with another field
 function detect(headers){
   const map={}, used=new Set();
   for(const f of Object.keys(FP)){
     let best=null,bs=1e9;
     FP[f].forEach((re,pi)=>headers.forEach((h,hi)=>{
-      if(used.has(h)) return;
+      if(used.has(h) && !REUSE_COL.has(f)) return;
       if(re.test(norm(h))){ const sc=pi*1000+hi; if(sc<bs){bs=sc;best=h;} }
     }));
-    if(best){ map[f]=best; if(!['amount2','status2'].includes(f)) used.add(best); }
+    if(best){ map[f]=best; if(!REUSE_COL.has(f)) used.add(best); }
   }
   return map;
 }
@@ -725,7 +720,11 @@ function ingestSheet(fileName, sheetName, hdr, raw, stats){
   const TODAY = dkey(new Date());
   const seen = new Map();
   raw.forEach(r=>{
-    const dOrd = parseDate(V(r,'date')), dEvt = parseDate(V(r,'edate'));
+    const dEvt = parseDate(V(r,'edate'));
+    // Buyer Invoice Date is the valid order date whenever the report carries it
+    const dBuy = parseDate(V(r,'bdate'));
+    const dRaw = parseDate(V(r,'date'));
+    const dOrd = dBuy || dRaw;
     const sku  = cleanSku(V(r,'sku')) || '(no sku)';
     const qty  = Math.max(1, Math.round(parseNum(V(r,'qty')))||1);
     let amt = Math.abs(parseNum(V(r,'amount')));
@@ -740,7 +739,7 @@ function ingestSheet(fileName, sheetName, hdr, raw, stats){
     const n=(seen.get(base)||0)+1; seen.set(base,n);
     const key=(forced?forced[0]+':':'')+base+(n>1?'#'+n:'');
 
-    const row={ _k:key, date:dkey(dOrd), edate:dkey(dEvt), sku, product:clean(V(r,'product')),
+    const row={ _k:key, date:dkey(dOrd), edate:dkey(dEvt), odate:dkey(dRaw), sku, product:clean(V(r,'product')),
       qty, amount:amt, status:st, forced, orderId:oid, itemId:iid, docId:did, src:fileName,
       state:clean(V(r,'state')), pin:clean(V(r,'pincode')), pay:clean(V(r,'payType')), ful:clean(V(r,'fulfil')),
       shopsy:/true|yes/i.test(String(V(r,'shopsy')))?'Shopsy':'Flipkart',
@@ -854,6 +853,7 @@ function groupBy(rows,keyFn){ const m=new Map();
 const byDate = rows => groupBy(rows,r=>effDate(r)||'(no date)').sort((a,b)=>a.k<b.k?-1:1);
 const bySku  = rows => groupBy(rows,r=>r.sku).sort((a,b)=>b.amt-a.amt);
 const sum = (a,f)=>a.reduce((s,x)=>s+f(x),0);
+
 
 /* ==================================================================
    CHARTS  (plain SVG, no library)
@@ -1001,6 +1001,7 @@ function csvDL(name, cols, rows){
 const DETAIL_COLS = [
   ['Date (report basis)', r=>effDate(r)],
   ['Order date',          r=>r.date],
+  ['Report order date',   r=>r.odate||''],
   ['Invoice / event date',r=>r.edate],
   ['Bucket',              r=>({SALE:'Sale',RETURN:'Return',PROCESS:'Processing',CANCEL:'Cancelled'})[r.bucket]||r.bucket],
   ['Return cancelled',    r=>r.rc?'Yes':''],
@@ -1150,6 +1151,7 @@ function downloadAll(){
   toast('Full report downloaded ✓');
 }
 
+
 /* ==================================================================
    GOOGLE SHEET SYNC  (Apps Script Web App backend)
    Row wire-format MUST match ORDER_HEADERS in Code.gs
@@ -1242,7 +1244,7 @@ async function cloudPush(){
     { const om=orderModel().map(r=>[r.date,r.orderId,r.itemId,r.sku,r.product,r.qty,r.retQty,r.canQty,
         round2(r.amount),round2(r.retAmount),r.expected,r.settled?r.actual:'',r.settled?r.diff:'',
         r.diffPct==null?'':round2(r.diffPct),
-        r.status==='short'?'KAM AAYA':r.status==='extra'?'ZYADA AAYA':r.status==='ok'?'OK':'PENDING']);
+        r.status==='short'?'SHORT':r.status==='extra'?'EXCESS':r.status==='ok'?'OK':'PENDING']);
       for(let i=0;i<om.length;i+=CLOUD.CHUNK){
         cloudStatus(`⬆ Settlement reconciliation… ${Math.floor(i/CLOUD.CHUNK)+1}/${Math.ceil(om.length/CLOUD.CHUNK)}`);
         await api('pushRecon',{rows:om.slice(i,i+CLOUD.CHUNK),first:i===0}); } }
@@ -1261,48 +1263,6 @@ async function cloudPush(){
   }catch(e){ cloudStatus('❌ '+esc(e.message)); toast('Push failed: '+e.message); }
   finally{ cloudBusy(false); }
 }
-/* Fast first-load pull: ask the sheet for its row counts once, then fetch every
-   block at the same time instead of one after another, and paint the dashboard
-   as soon as the orders are in (prices / cashback fill in a moment later). */
-async function fastPull(onProgress, info){
-  const say = onProgress || function(){};
-  if(!info){ say('Checking the sheet\u2026'); info = await api('ping'); }
-  const L = 1000, S_L = 2000;
-  let done = 0;
-  const nOrders = Math.ceil((info.orders||0)/L);
-  const tick = () => { done++; say('Downloading\u2026 ' + done + ' / ' + nOrders + ' blocks'); };
-
-  const orderJobs = [];
-  for(let off=0; off<(info.orders||0); off+=L) orderJobs.push(api('pull',{offset:off,limit:L}).then(j=>{tick(); return j;}));
-
-  const extraJobs = [];
-  if(info.skus)     extraJobs.push(api('pullSku').then(j=>['sku',j]));
-  if(info.cashback) extraJobs.push(api('pullCash').then(j=>['cash',j]));
-  if(info.settlements) for(let off=0; off<info.settlements; off+=S_L) extraJobs.push(api('pullSettle',{offset:off,limit:S_L}).then(j=>['settle',j]));
-
-  const oRes = await Promise.all(orderJobs);
-  const idx = new Map(S.rows.map((r,i)=>[r._k,i]));
-  oRes.forEach(j=>(j.rows||[]).forEach(a=>{ const r=arrToRow(a);
-    if(idx.has(r._k)) S.rows[idx.get(r._k)]=r; else { idx.set(r._k,S.rows.length); S.rows.push(r); } }));
-  reclassify(); renderAll();
-  say('Finishing up\u2026');
-
-  const eRes = await Promise.all(extraJobs);
-  const si = new Map(S.settle.map((r,i)=>[r._k,i]));
-  const ci = new Map(S.cash.map((r,i)=>[r._k,i]));
-  eRes.forEach(pair=>{ const kind=pair[0], j=pair[1], rows=j.rows||[];
-    if(kind==='sku') rows.forEach(a=>{ const k=String(a[0]||'').trim(); if(!k) return;
-      S.sku[k]={basic:+a[2]||0, sell:+a[3]||0, setl:+a[4]||0, rcost:+a[5]||0, note:a[6]||''}; });
-    else if(kind==='cash') rows.forEach(a=>{ const r=arrToCash(a);
-      if(ci.has(r._k)) S.cash[ci.get(r._k)]=r; else { ci.set(r._k,S.cash.length); S.cash.push(r); } });
-    else rows.forEach(a=>{ const r=arrToSettle(a);
-      if(si.has(r._k)) S.settle[si.get(r._k)]=r; else { si.set(r._k,S.settle.length); S.settle.push(r); } });
-  });
-  reclassify(); save(); renderAll();
-  CLOUD.last=new Date().toLocaleString('en-IN'); cloudSave(); cloudStatus('\u2705 Loaded from the sheet');
-  return S.rows.length;
-}
-
 async function cloudPull(){
   if(S.rows.length && !confirm('Sheet data will be merged with your local data (rows with the same RowKey are overwritten). Continue?')) return;
   try{
@@ -1357,6 +1317,58 @@ function wireCloud(){
                       : 'Web App URL is filled in. Now paste your <b>API token</b> — get it from the Sheet menu <b>⚙ Flipkart DB → 2. Show API token</b>.'))
     : 'Not connected yet. Paste your Web App URL above.');
 }
+
+/* ---------- fast parallel download (used by auto-sync) ---------- */
+async function fastPull(onProgress, info){
+  const say = m => { try{ onProgress && onProgress(m); }catch(e){} };
+  if(!info) info = await api('ping');
+  const nOrders = +info.orders||0, nSettle = +info.settlements||0;
+  const OB = 1000, SB = 2000;
+
+  /* orders — every block requested at once */
+  say(`downloading ${nf.format(nOrders)} order rows…`);
+  const jobs = [];
+  for(let off=0; off<nOrders; off+=OB) jobs.push(api('pull',{offset:off,limit:OB}));
+  const blocks = await Promise.all(jobs);
+  const idx = new Map(S.rows.map((r,i)=>[r._k,i]));
+  let got = 0;
+  blocks.forEach(j => (j.rows||[]).forEach(a => {
+    const r = arrToRow(a); got++;
+    if(idx.has(r._k)) S.rows[idx.get(r._k)] = r;
+    else { idx.set(r._k, S.rows.length); S.rows.push(r); }
+  }));
+
+  /* paint the dashboard as soon as the orders are in */
+  reclassify(); save();
+  try{ renderAll(); }catch(e){}
+  say(`${nf.format(got)} orders loaded · fetching prices & settlements…`);
+
+  /* the rest in parallel */
+  const setlJobs = [];
+  for(let off=0; off<nSettle; off+=SB) setlJobs.push(api('pullSettle',{offset:off,limit:SB}));
+  const [sk, cash, ...setlBlocks] = await Promise.all([api('pullSku'), api('pullCash'), ...setlJobs]);
+
+  (sk.rows||[]).forEach(a => { const k=String(a[0]||'').trim(); if(!k) return;
+    S.sku[k] = {basic:+a[2]||0, sell:+a[3]||0, setl:+a[4]||0, rcost:+a[5]||0, note:a[6]||''}; });
+
+  const si = new Map(S.settle.map((r,i)=>[r._k,i]));
+  let nSet = 0;
+  setlBlocks.forEach(j => (j.rows||[]).forEach(a => { const r=arrToSettle(a); nSet++;
+    if(si.has(r._k)) S.settle[si.get(r._k)] = r; else { si.set(r._k, S.settle.length); S.settle.push(r); } }));
+
+  const ci = new Map(S.cash.map((r,i)=>[r._k,i]));
+  (cash.rows||[]).forEach(a => { const r=arrToCash(a);
+    if(ci.has(r._k)) S.cash[ci.get(r._k)] = r; else { ci.set(r._k, S.cash.length); S.cash.push(r); } });
+
+  save();
+  try{ renderAll(); }catch(e){}
+  CLOUD.last = new Date().toLocaleString('en-IN'); cloudSave(); cloudStatus(cloudStatusText());
+  return { orders:got, settlements:nSet, skus:(sk.rows||[]).length, cashback:(cash.rows||[]).length };
+}
+function cloudStatusText(){
+  return `✅ In sync with the Google Sheet · <b>${nf.format(S.rows.length)}</b> order rows · <b>${nf.format(S.settle.length)}</b> settlement · <b>${nf.format(Object.keys(S.sku).length)}</b> SKU prices`;
+}
+
 
 /* ==================================================================
    SKU & PROFIT TAB
@@ -1833,6 +1845,7 @@ function wireProfit(){
   $('#btnPfClear').onclick=()=>{ if(confirm('This clears the prices for every SKU. Continue?')){ S.sku={}; save(); renderProfit(); } };
 }
 
+
 /* ==================================================================
    VIEWS
    ================================================================== */
@@ -2201,7 +2214,7 @@ function renderData(){
     `<div><b>${esc(f.name)}</b><span style="color:var(--muted)">${esc((f.sheets||[]).join(' · '))}</span><div class="spacer"></div><span style="color:var(--muted)">${f.when}</span></div>`
   ).join('') : '<em style="color:var(--muted)">No files yet.</em>';
 
-  const fields=[['date','Order date'],['edate','Invoice / event date'],['sku','SKU'],['product','Product name'],['qty','Quantity'],
+  const fields=[['date','Order date'],['bdate','Buyer Invoice Date → order date'],['edate','Invoice / event date'],['sku','SKU'],['product','Product name'],['qty','Quantity'],
     ['amount','Amount'],['status','Status / Event sub type'],['orderId','Order ID'],['itemId','Order item ID'],['docId','Invoice ID (unique key)'],
     ['state','Customer state'],['payType','Payment type'],['taxable','Taxable value'],['igst','IGST'],['tcs','TCS']];
   $('#mapUI').innerHTML = S.headers.length ? fields.map(([k,l])=>
@@ -2304,48 +2317,53 @@ let rt; addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(renderAll,
 try{ const t=localStorage.getItem('fk_theme'); if(t){document.documentElement.dataset.theme=t; $('#btnTheme').textContent=t==='dark'?'☀ Light':'🌙 Dark';} }catch(e){}
 load(); wireCloud(); wireProfit(); go('over');
 
-/* The Google Sheet is the single source of truth. On every open the dashboard
-   paints its cached copy straight away, then checks the sheet in the background:
-   if the sheet changed, the copy is rebuilt from it; if the sheet was emptied,
-   the dashboard clears itself too. */
+try{ const pd=document.getElementById('printDate');
+  if(pd) pd.textContent = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}catch(e){}
+
+/* ---------- auto-sync with the Google Sheet on load ---------- */
 (async function syncWithSheet(){
   if(!CLOUD.url) return;
-  const fresh = !S.rows.length;
-  const note = document.createElement('div');
-  note.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99;'+
-    'background:var(--ink);color:var(--surface);box-shadow:0 8px 30px rgba(0,0,0,.3);'+
-    'border-radius:11px;padding:11px 18px;font-size:13px;font-weight:600;max-width:90vw;text-align:center';
-  const say = t => { note.textContent=t; if(!note.isConnected) document.body.appendChild(note); };
-  const hide = ms => setTimeout(()=>note.remove(), ms||0);
+  let note=null;
+  const say = m => {
+    if(!note){
+      note=document.createElement('div');
+      note.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:80;'
+        +'background:var(--surface-2);border:1px solid var(--border);border-radius:12px;'
+        +'padding:9px 15px;font-size:12.5px;font-weight:600;box-shadow:var(--shadow);max-width:88vw';
+      document.body.appendChild(note);
+    }
+    note.textContent = m;
+  };
+  const done = () => { if(note){ note.remove(); note=null; } };
 
-  if(fresh) say('\u2601 Loading data from the Google Sheet\u2026');
-  let info;
-  try{ info = await api('ping'); }
-  catch(e){
-    if(fresh){ say('\u26a0 Could not reach the Google Sheet \u2014 please try again in a moment.'); hide(9000); }
-    else note.remove();
-    return;
-  }
-
-  const sOrders = info.orders||0, sCash = info.cashback||0;
-
-  if(!sOrders && !sCash){                       // sheet emptied -> clear the dashboard
-    if(S.rows.length || S.cash.length){
-      S.rows=[]; S.cash=[]; S.settle=[]; S.sku={}; S.files=[]; S.map={}; S.headers=[]; S.unknown={};
-      save(); renderAll();
-      say('\ud83d\uddd1 The Google Sheet is empty \u2014 the dashboard was cleared to match it.'); hide(9000);
-    } else note.remove();
-    return;
-  }
-
-  if(S.rows.length===sOrders && S.cash.length===sCash){ note.remove(); return; }
-
-  S.rows=[]; S.cash=[]; S.settle=[]; S.sku={};   // rebuild from the sheet
   try{
-    await fastPull(m=>say('\u2601 '+m), info);
-    say('\u2705 Updated from the Google Sheet'); hide(3500);
+    say('☁ Checking the Google Sheet…');
+    const info = await api('ping');
+    const sOrders = +info.orders||0, sCash = +info.cashback||0;
+
+    /* sheet is empty → the dashboard should be empty too */
+    if(!sOrders && !sCash){
+      if(S.rows.length || S.cash.length || S.settle.length){
+        S.rows=[]; S.cash=[]; S.settle=[]; S.files=[];
+        save(); renderAll();
+        say('☁ Google Sheet is empty — local data cleared');
+        setTimeout(done, 2600);
+      } else done();
+      return;
+    }
+
+    /* already identical → nothing to do */
+    if(S.rows.length===sOrders && S.cash.length===sCash){ done(); return; }
+
+    /* counts differ → rebuild the local copy from the sheet */
+    S.rows=[]; S.cash=[]; S.settle=[]; S.sku={};
+    const r = await fastPull(m => say('☁ '+m), info);
+    say(`☁ Synced · ${nf.format(r.orders)} orders · ${nf.format(r.settlements)} settlement rows`);
+    setTimeout(done, 3000);
   }catch(e){
-    say('\u26a0 Could not load data from the sheet.'); hide(9000);
+    say('☁ Could not reach the Google Sheet — showing local data');
+    setTimeout(done, 3500);
   }
 })();
 
